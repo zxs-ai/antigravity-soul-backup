@@ -1,0 +1,78 @@
+name: Build Mac and Windows Apps
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  release:
+    types: [created]
+
+jobs:
+  build-mac:
+    runs-on: macos-14 # M-series runners
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller --noconsole --windowed --name "AntigravitySoulManager" main.py
+    - name: Archive app
+      run: |
+        cd dist
+        zip -r AntigravitySoulManager-mac-arm64.zip AntigravitySoulManager.app
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mac-app
+        path: dist/AntigravitySoulManager-mac-arm64.zip
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller --noconsole --onefile --name "AntigravitySoulManager" main.py
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: win-app
+        path: dist/AntigravitySoulManager.exe
+
+  create-release:
+    needs: [build-mac, build-windows]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Mac artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-app
+      - name: Download Win artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: win-app
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            AntigravitySoulManager-mac-arm64.zip
+            AntigravitySoulManager.exe
