@@ -23,7 +23,7 @@ jobs:
         pip install pyinstaller
     - name: Build with PyInstaller
       run: |
-        pyinstaller --noconsole --windowed --name "AntigravitySoulManager" main.py
+        pyinstaller --noconsole --windowed --icon=app_icon.icns --name "AntigravitySoulManager" main.py
     - name: Archive app
       run: |
         cd dist
